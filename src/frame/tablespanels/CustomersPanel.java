@@ -75,6 +75,7 @@ public class CustomersPanel extends JPanel {
 
         addButton.addActionListener(new AddActionButton());
         table.addMouseListener(new MouseAction());
+        deleteButton.addActionListener(new DeleteAction());
 
         this.setVisible(true);
     }
@@ -187,6 +188,34 @@ public class CustomersPanel extends JPanel {
             // TODO Auto-generated method stub
 
         }
+    }
 
+    class DeleteAction implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int selectedRow = table.getSelectedRow();
+
+            if (selectedRow != -1) {
+                int clientId = (int) table.getValueAt(selectedRow, 0);
+
+                try {
+                    conn = DBConnection.getConnection();
+                    String sql = "DELETE FROM CLIENTS WHERE CLIENT_ID = ?";
+                    state = conn.prepareStatement(sql);
+                    state.setInt(1, clientId);
+                    state.executeUpdate();
+
+                    refreshTable();
+                    refreshComboPerson();
+                    clearForm();
+
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Изберете клиент за изтриване.");
+            }
+        }
     }
 }
