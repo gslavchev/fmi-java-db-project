@@ -75,6 +75,7 @@ public class CustomersPanel extends JPanel {
 
         addButton.addActionListener(new AddActionButton());
         table.addMouseListener(new MouseAction());
+        editButton.addActionListener(new EditAction());
         deleteButton.addActionListener(new DeleteAction());
         searchButton.addActionListener(new SearchActionPerson());
         refreshButton.addActionListener(new RefreshActionPerson());
@@ -217,6 +218,57 @@ public class CustomersPanel extends JPanel {
                 }
             } else {
                 JOptionPane.showMessageDialog(null, "Изберете клиент за изтриване.");
+            }
+        }
+    }
+
+    class EditAction implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int selectedRow = table.getSelectedRow();
+
+            if (selectedRow != -1) {
+                int clientId = (int) table.getValueAt(selectedRow, 0);
+
+                String updatedName = customerNameTf.getText();
+                String updatedAge = ageTf.getText();
+                String updatedGender = (String) genderCb.getSelectedItem();
+                String updatedCity = cityTf.getText();
+
+                try {
+                    int age = Integer.parseInt(updatedAge);
+
+
+                    try {
+                        conn = DBConnection.getConnection();
+                        String sql = "UPDATE CLIENTS SET CLIENT_NAME = ?, CLIENT_AGE = ?, CLIENT_GENDER = ?, CLIENT_CITY = ? WHERE CLIENT_ID = ?";
+                        state = conn.prepareStatement(sql);
+
+                        state.setString(1, updatedName);
+                        state.setInt(2, age);
+                        state.setString(3, updatedGender);
+                        state.setString(4, updatedCity);
+                        state.setInt(5, clientId);
+
+                        int rowsAffected = state.executeUpdate();
+                        if (rowsAffected > 0) {
+                            refreshTable();
+                            refreshComboPerson();
+                            clearForm();
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Не можа да се извърши актуализацията.");
+                        }
+
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Грешка при актуализиране на данните.");
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Моля, въведете валидна възраст.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Изберете клиент за редактиране.");
             }
         }
     }
