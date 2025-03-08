@@ -1,6 +1,6 @@
 package frame.tablespanels;
 
-import database.databaseaccess.DBConnection;
+import database.access.DBConnection;
 import database.tablemodel.MyModel;
 
 import javax.swing.*;
@@ -138,7 +138,6 @@ public class CustomersPanel extends JPanel {
                 refreshComboPerson();
                 clearForm();
             } catch (SQLException e1) {
-                // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
         }

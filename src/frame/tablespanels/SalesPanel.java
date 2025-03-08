@@ -10,5 +10,8 @@ public class SalesPanel extends JPanel {
     public SalesPanel() {
         this.setSize(400, 500);
         this.setLayout(new GridLayout(3, 1));
+        
+        
+        this.setVisible(true);
     }
 }

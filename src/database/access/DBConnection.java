@@ -1,4 +1,4 @@
-package database.databaseaccess;
+package database.access;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -12,7 +12,7 @@ public class DBConnection {
 
         try {
             Class.forName("org.h2.Driver");
-            connection = DriverManager.getConnection("jdbc:h2:tcp://localhost/C:\\Users\\user\\OneDrive\\Desktop\\h2\\bin" ,
+            connection = DriverManager.getConnection("jdbc:h2:tcp://localhost/C:\\Users\\User\\Desktop\\h2\\bin" ,
                     "sa" , "1234");
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
