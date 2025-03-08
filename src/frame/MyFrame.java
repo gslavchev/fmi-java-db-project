@@ -19,9 +19,9 @@ public class MyFrame extends JFrame {
         this.setName("NG MOTORSPORTS");
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        tabbedPane.add(customersPanel , "Коли");
-        tabbedPane.add(salesPanel , "Продажби");
-        tabbedPane.add(carsPanel , "Клиенти");
+        tabbedPane.add("Клиенти", customersPanel);
+        tabbedPane.add("Продажби", salesPanel);
+        tabbedPane.add("Коли", carsPanel);
 
         this.add(tabbedPane);
 

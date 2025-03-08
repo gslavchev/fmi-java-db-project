@@ -2,29 +2,37 @@ package frame.tablespanels;
 
 import javax.swing.*;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
-public class CarsPanel extends JFrame {
+public class CarsPanel extends JPanel {
     JPanel upPanel = new JPanel();
     JPanel midPanel = new JPanel();
     JPanel downPanel = new JPanel();
 
     JLabel carModelL = new JLabel("Кола:");
-    JLabel yearOfProductionL = new JLabel("Година на производство:");
-    JLabel horsePowerL = new JLabel("Мощност:");
-    JLabel gearboxL = new JLabel("Скорости:");
-    JLabel fuelL = new JLabel("Гориво:");
-    JLabel mileageL = new JLabel("Пробег:");
-    JLabel priceL = new JLabel("Цена:");
-
     JTextField carModelTf = new JTextField();
+
+    JLabel yearOfProductionL = new JLabel("Година на производство:");
     JTextField yearOfProductionTf = new JTextField();
+
+    JLabel horsePowerL = new JLabel("Мощност:");
     JTextField horsePowerTf = new JTextField();
-    JTextField mileageTf = new JTextField();
-    JTextField priceTf = new JTextField();
+
+    JLabel gearboxL = new JLabel("Скорости:");
     String[] gearboxOption ={"Автоматични" , "Ръчни"};
     JComboBox<String>  gearboxCb = new JComboBox<String>(gearboxOption);
+
+    JLabel fuelL = new JLabel("Гориво:");
     String[] fuelOption ={"Бензин" , "Дизел"};
     JComboBox<String>  fuelCb = new JComboBox<String>(fuelOption);
+
+    JLabel mileageL = new JLabel("Пробег:");
+    JTextField mileageTf = new JTextField();
+
+    JLabel priceL = new JLabel("Цена:");
+    JTextField priceTf = new JTextField();
 
     JButton addBtn = new JButton("Add");
     JButton deleteButton = new JButton("Delete");
@@ -40,7 +48,7 @@ public class CarsPanel extends JFrame {
         this.setSize(400, 500);
         this.setLayout(new GridLayout(3, 1));
 
-        upPanel.setLayout(new GridLayout(5, 2));
+        upPanel.setLayout(new GridLayout(7, 2));
         upPanel.add(carModelL);
         upPanel.add(carModelTf);
         upPanel.add(yearOfProductionL);
