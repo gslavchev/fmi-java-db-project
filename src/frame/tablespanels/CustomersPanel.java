@@ -76,6 +76,8 @@ public class CustomersPanel extends JPanel {
         addButton.addActionListener(new AddActionButton());
         table.addMouseListener(new MouseAction());
         deleteButton.addActionListener(new DeleteAction());
+        searchButton.addActionListener(new SearchActionPerson());
+        refreshButton.addActionListener(new RefreshActionPerson());
 
         this.setVisible(true);
     }
@@ -218,4 +220,41 @@ public class CustomersPanel extends JPanel {
             }
         }
     }
+
+    class SearchActionPerson implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                conn = DBConnection.getConnection();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+            String sql = "SELECT * FROM CLIENTS WHERE CLIENT_AGE = ?";
+
+            try {
+                state = conn.prepareStatement(sql);
+                state.setInt(1, Integer.parseInt(ageTf.getText()));
+                result = state.executeQuery();
+                table.setModel(new MyModel(result));
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    class RefreshActionPerson implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                refreshTable();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
 }
