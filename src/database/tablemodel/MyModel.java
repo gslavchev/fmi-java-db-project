@@ -1,3 +1,4 @@
+package database.tablemodel;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -63,4 +64,4 @@ public class MyModel extends AbstractTableModel {
             return null;
         }
     }// end getColumnName
-} // end class MyModel
+} // end class database.tablemodel.MyModel
