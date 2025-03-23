@@ -46,7 +46,7 @@ public class CustomersPanel extends JPanel {
 
     JTable table = new JTable();
     JScrollPane myScroll = new JScrollPane(table);
-   
+
     public CustomersPanel() {
         this.setSize(400, 500);
         this.setLayout(new GridLayout(3, 1));
@@ -77,8 +77,14 @@ public class CustomersPanel extends JPanel {
         table.addMouseListener(new MouseAction());
         editButton.addActionListener(new EditAction());
         deleteButton.addActionListener(new DeleteAction());
-        searchButton.addActionListener(new SearchActionPerson());
-        refreshButton.addActionListener(new RefreshActionPerson());
+        searchButton.addActionListener(new SearchAction());
+        refreshButton.addActionListener(new RefreshAction());
+
+        try {
+            refreshTable();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         this.setVisible(true);
     }
@@ -272,7 +278,7 @@ public class CustomersPanel extends JPanel {
         }
     }
 
-    class SearchActionPerson implements ActionListener {
+    class SearchAction implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -296,7 +302,7 @@ public class CustomersPanel extends JPanel {
         }
     }
 
-    class RefreshActionPerson implements ActionListener {
+    class RefreshAction implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {

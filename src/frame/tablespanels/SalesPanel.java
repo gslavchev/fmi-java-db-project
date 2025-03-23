@@ -7,7 +7,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 
 public class SalesPanel extends JPanel {
@@ -23,7 +26,8 @@ public class SalesPanel extends JPanel {
     JComboBox<String> carCb = new JComboBox<>();
     HashMap<Integer, String> carMap = new HashMap<>();
     JLabel customerLb = new JLabel("Клиент: ");
-
+    JComboBox<String> customerCb = new JComboBox<>();
+    HashMap<Integer, String> customerMap = new HashMap<>();
     JLabel sellDateLb = new JLabel("Дата:");
     JTextField sellDateTf = new JTextField();
 
@@ -39,18 +43,18 @@ public class SalesPanel extends JPanel {
     JPanel upPanel = new JPanel();
     JPanel midPanel = new JPanel();
     JPanel downPanel = new JPanel();
+
     public SalesPanel() {
         this.setSize(400, 500);
         this.setLayout(new GridLayout(3, 1));
-
 
         upPanel.setLayout(new GridLayout(3, 2));
         upPanel.add(carLb);
         upPanel.add(carCb);
         upPanel.add(customerLb);
+        upPanel.add(customerCb);
         upPanel.add(sellDateLb);
         upPanel.add(sellDateTf);
-
 
         midPanel.add(addButton);
         midPanel.add(deleteButton);
@@ -58,7 +62,7 @@ public class SalesPanel extends JPanel {
         midPanel.add(searchButton);
         midPanel.add(refreshButton);
 
-        myScroll.setPreferredSize(new Dimension(350 , 150));
+        myScroll.setPreferredSize(new Dimension(350, 150));
         downPanel.add(myScroll);
 
         this.add(upPanel);
@@ -72,8 +76,11 @@ public class SalesPanel extends JPanel {
         refreshButton.addActionListener(new RefreshAction());
 
         loadCars();
+        loadCustomers();
         clearForm();
         refreshTable();
+
+        table.addMouseListener(new MouseAction(this));
         
         this.setVisible(true);
     }
@@ -100,8 +107,35 @@ public class SalesPanel extends JPanel {
         }
     }
 
+    private void loadCustomers() {
+        try {
+            connection = DBConnection.getConnection();
+            String sql = "SELECT CLIENT_ID, CLIENT_NAME FROM CLIENTS";
+            statement = connection.prepareStatement(sql);
+            resultSet = statement.executeQuery();
+
+            customerCb.removeAllItems();
+            customerMap.clear();
+
+            while (resultSet.next()) {
+                int customerId = resultSet.getInt("CLIENT_ID");
+                String customerName = resultSet.getString("CLIENT_NAME");
+
+                customerCb.addItem(customerName);
+                customerMap.put(customerId, customerName);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void clearForm() {
-        carCb.setSelectedIndex(0);
+        if (carCb.getItemCount() > 0) {
+            carCb.setSelectedIndex(0);
+        }
+        if (customerCb.getItemCount() > 0) {
+            customerCb.setSelectedIndex(0);
+        }
         sellDateTf.setText("");
         id = 1;
     }
@@ -117,18 +151,103 @@ public class SalesPanel extends JPanel {
         return -1;
     }
 
+    private int getSelectedCustomerId() {
+        String selectedCustomer = (String) customerCb.getSelectedItem();
+
+        for (Integer customerId : customerMap.keySet()) {
+            if (customerMap.get(customerId).equals(selectedCustomer)) {
+                return customerId;
+            }
+        }
+        return -1;
+    }
+
+    public class MouseAction implements MouseListener {
+
+        private SalesPanel salesPanel;
+
+        public MouseAction(SalesPanel salesPanel) {
+            this.salesPanel = salesPanel;
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+                int row = salesPanel.table.rowAtPoint(e.getPoint());
+                if (row >= 0) {
+                    int salesId = (int) salesPanel.table.getValueAt(row, 0);
+                    String carModel = (String) salesPanel.table.getValueAt(row, 1);
+                    String customerName = (String) salesPanel.table.getValueAt(row, 2);
+
+                    Object sellDateObj = salesPanel.table.getValueAt(row, 3);
+                    String sellDate = "";
+
+                    if (sellDateObj instanceof Date) {
+                        java.sql.Date sqlDate = (java.sql.Date) sellDateObj;
+                        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                        sellDate = sdf.format(sqlDate);
+                    }
+
+                    salesPanel.id = salesId;
+                    salesPanel.carCb.setSelectedItem(carModel);
+                    salesPanel.customerCb.setSelectedItem(customerName);
+                    salesPanel.sellDateTf.setText(sellDate);
+                }
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+
+        }
+    }
+
     class AddAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
                 connection = DBConnection.getConnection();
-                String sql = "INSERT INTO SALES (CAR_ID, CUSTOMER_NAME, SELL_DATE) VALUES (?, ?, ?)";
+                String sql = "INSERT INTO SALES (CAR_ID, CLIENT_ID, BUYING_DATE) VALUES (?, ?, ?)";
                 statement = connection.prepareStatement(sql);
 
                 idCar = getSelectedCarId();
-                statement.setInt(1,idCar);
-                //statement.setString(2, customerTf.getText());
-                statement.setDate(3, Date.valueOf(sellDateTf.getText()));
+                idCustomer = getSelectedCustomerId();
+
+                statement.setInt(1, idCar);
+                statement.setInt(2, idCustomer);
+
+                String sellDate = sellDateTf.getText().trim();
+
+                if (sellDate.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Моля, въведете валидна дата.");
+                    return;
+                }
+
+                if (!sellDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                    JOptionPane.showMessageDialog(null, "Невалиден формат на датата. Моля, използвайте YYYY-MM-DD.");
+                    return;
+                }
+
+                try {
+                    Date date = Date.valueOf(sellDate);
+                    statement.setDate(3, date);
+                } catch (IllegalArgumentException ex) {
+                    JOptionPane.showMessageDialog(null, "Невалидна дата. Моля, въведете валидна дата.");
+                    return;
+                }
 
                 statement.execute();
 
@@ -139,6 +258,7 @@ public class SalesPanel extends JPanel {
 
                 refreshTable();
                 loadCars();
+                loadCustomers();
                 clearForm();
 
             } catch (SQLException ex) {
@@ -149,9 +269,15 @@ public class SalesPanel extends JPanel {
     private void refreshTable() {
         try {
             connection = DBConnection.getConnection();
-            statement = connection.prepareStatement("SELECT * FROM SALES;");
+            String sql = "SELECT SALES.SALES_ID, CARS.CAR_MODEL, CLIENTS.CLIENT_NAME, SALES.BUYING_DATE " +
+                    "FROM SALES " +
+                    "JOIN CARS ON SALES.CAR_ID = CARS.CAR_ID " +
+                    "JOIN CLIENTS ON SALES.CLIENT_ID = CLIENTS.CLIENT_ID";
+            statement = connection.prepareStatement(sql);
             resultSet = statement.executeQuery();
+
             table.setModel(new MyModel(resultSet));
+
         } catch (SQLException ex) {
             ex.printStackTrace();
         } catch (Exception e) {
@@ -166,7 +292,7 @@ public class SalesPanel extends JPanel {
 
             try {
                 connection = DBConnection.getConnection();
-                String sql = "DELETE FROM SALES WHERE SALE_ID = ?";
+                String sql = "DELETE FROM SALES WHERE SALES_ID = ?";
                 statement = connection.prepareStatement(sql);
                 statement.setInt(1, id);
                 statement.execute();
@@ -186,12 +312,32 @@ public class SalesPanel extends JPanel {
 
             try {
                 connection = DBConnection.getConnection();
-                String sql = "UPDATE SALES SET CAR_ID = ?, CUSTOMER_NAME = ?, SELL_DATE = ? WHERE SALE_ID = ?";
+                String sql = "UPDATE SALES SET CAR_ID = ?, CLIENT_ID = ?, BUYING_DATE = ? WHERE SALES_ID = ?";
                 statement = connection.prepareStatement(sql);
 
                 statement.setInt(1, getSelectedCarId());
-                //statement.setString(2, customerTf.getText());
-                statement.setDate(3, Date.valueOf(sellDateTf.getText()));
+                statement.setInt(2, getSelectedCustomerId());
+
+                String sellDate = sellDateTf.getText().trim();
+
+                if (sellDate.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Моля, въведете валидна дата.");
+                    return;
+                }
+
+                if (!sellDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                    JOptionPane.showMessageDialog(null, "Невалиден формат на датата. Моля, използвайте YYYY-MM-DD.");
+                    return;
+                }
+
+                try {
+                    Date date = Date.valueOf(sellDate);
+                    statement.setDate(3, date);
+                } catch (IllegalArgumentException ex) {
+                    JOptionPane.showMessageDialog(null, "Невалидна дата. Моля, въведете валидна дата.");
+                    return;
+                }
+
                 statement.setInt(4, id);
 
                 statement.execute();
@@ -201,18 +347,42 @@ public class SalesPanel extends JPanel {
                 ex.printStackTrace();
             }
         }
+
     }
 
     class SearchAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
-                connection = DBConnection.getConnection();
-                String sql = "SELECT * FROM SALES WHERE CUSTOMER_NAME = ?";
-                statement = connection.prepareStatement(sql);
-                //statement.setString(1, customerTf.getText());
-                resultSet = statement.executeQuery();
-                table.setModel(new MyModel(resultSet));
+                String searchDate = sellDateTf.getText().trim();
+
+                if (searchDate.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Моля, въведете дата.");
+                    return;
+                }
+
+                if (!searchDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                    JOptionPane.showMessageDialog(null, "Невалиден формат на датата. Моля, използвайте YYYY-MM-DD.");
+                    return;
+                }
+
+                try {
+                    Date date = Date.valueOf(searchDate);
+
+                    String sql = "SELECT SALES.SALES_ID, CARS.CAR_MODEL, CLIENTS.CLIENT_NAME, SALES.BUYING_DATE " +
+                            "FROM SALES " +
+                            "JOIN CARS ON SALES.CAR_ID = CARS.CAR_ID " +
+                            "JOIN CLIENTS ON SALES.CLIENT_ID = CLIENTS.CLIENT_ID " +
+                            "WHERE SALES.BUYING_DATE = ?";
+                    connection = DBConnection.getConnection();
+                    statement = connection.prepareStatement(sql);
+                    statement.setDate(1, date);
+
+                    resultSet = statement.executeQuery();
+                    table.setModel(new MyModel(resultSet));
+                } catch (IllegalArgumentException ex) {
+                    JOptionPane.showMessageDialog(null, "Невалидна дата. Моля, въведете валидна дата.");
+                }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             } catch (Exception ex) {
@@ -221,11 +391,13 @@ public class SalesPanel extends JPanel {
         }
     }
 
+
     class RefreshAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             refreshTable();
             loadCars();
+            loadCustomers();
             clearForm();
         }
     }
