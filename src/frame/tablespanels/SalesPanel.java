@@ -71,8 +71,8 @@ public class SalesPanel extends JPanel {
         searchButton.addActionListener(new SearchAction());
         refreshButton.addActionListener(new RefreshAction());
 
-        clearForm();
         loadCars();
+        clearForm();
         refreshTable();
         
         this.setVisible(true);
@@ -101,9 +101,7 @@ public class SalesPanel extends JPanel {
     }
 
     private void clearForm() {
-        if (carCb.getItemCount() > 0) {
-            carCb.setSelectedIndex(0);
-        }
+        carCb.setSelectedIndex(0);
         sellDateTf.setText("");
         id = 1;
     }
