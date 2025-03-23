@@ -91,7 +91,7 @@ public class SalesPanel extends JPanel {
     private void loadCars() {
         try {
             connection = DBConnection.getConnection();
-            String sql = "SELECT CAR_ID, CAR_MODEL FROM CARS WHERE CAR_STATUS IS NULL";
+            String sql = "SELECT CAR_ID, CAR_MODEL FROM CARS WHERE CAR_STATUS = 'available';";
             statement = connection.prepareStatement(sql);
             resultSet = statement.executeQuery();
 
@@ -367,12 +367,24 @@ public class SalesPanel extends JPanel {
         public void actionPerformed(ActionEvent e) {
             try {
                 String searchDate = sellDateTf.getText().trim();
+                String customerName = customerCb.getSelectedItem().toString().trim();
+                connection = DBConnection.getConnection();
 
-                if (searchDate.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Моля, въведете дата.");
+                if (searchDate.isEmpty() && !customerName.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Търсене по клиент");
+                    String sql = "SELECT SALES.SALES_ID, CARS.CAR_MODEL, CLIENTS.CLIENT_NAME, SALES.BUYING_DATE " +
+                            "FROM SALES " +
+                            "JOIN CARS ON SALES.CAR_ID = CARS.CAR_ID " +
+                            "JOIN CLIENTS ON SALES.CLIENT_ID = CLIENTS.CLIENT_ID WHERE CLIENTS.CLIENT_NAME = ?";
+
+                    statement = connection.prepareStatement(sql);
+                    statement.setString(1, customerName);
+                    resultSet = statement.executeQuery();
+
+                    table.setModel(new MyModel(resultSet));
+
                     return;
                 }
-
                 if (!isValidDate(searchDate)) {
                     JOptionPane.showMessageDialog(null, "Невалиден формат на датата. Моля, използвайте DD-MM-YYYY.");
                     return;
@@ -380,7 +392,6 @@ public class SalesPanel extends JPanel {
 
                 LocalDate date = LocalDate.parse(searchDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
 
-                connection = DBConnection.getConnection();
                 String sql = "SELECT SALES.SALES_ID, CARS.CAR_MODEL, CLIENTS.CLIENT_NAME, SALES.BUYING_DATE " +
                         "FROM SALES " +
                         "JOIN CARS ON SALES.CAR_ID = CARS.CAR_ID " +
@@ -400,6 +411,7 @@ public class SalesPanel extends JPanel {
             }
         }
     }
+
     class RefreshAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -412,7 +424,11 @@ public class SalesPanel extends JPanel {
 
     private boolean isValidDate(String date) {
         try {
-            LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            LocalDate enterDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+            if (enterDate.isAfter(LocalDate.now())) {
+                return false;
+            }
             return true;
         } catch (DateTimeParseException ex) {
             return false;

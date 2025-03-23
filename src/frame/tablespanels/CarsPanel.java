@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 
 public class CarsPanel extends JPanel {
 
@@ -106,7 +107,7 @@ public class CarsPanel extends JPanel {
 
         try {
             connection = DBConnection.getConnection();
-            statement = connection.prepareStatement("select * from CARS WHERE CAR_STATUS IS NULL;");
+            statement = connection.prepareStatement("SELECT * FROM CARS WHERE CAR_STATUS = 'available';");
             resultSet = statement.executeQuery();
             table.setModel(new MyModel(resultSet));
         } catch (SQLException e) {
@@ -135,21 +136,29 @@ public class CarsPanel extends JPanel {
                 throw new RuntimeException(ex);
             }
             String sql="insert into CARS (CAR_MODEL, YEAR_OF_PRODUCTION , HORSE_POWER ," +
-                    " GEARBOX, FUEL, MILEAGE, PRICE) " +
-                    "values (?,?,?,?,?,?,?)";
+                    " GEARBOX, FUEL, MILEAGE, PRICE, CAR_STATUS) " +
+                    "values (?,?,?,?,?,?,?,?)";
             try {
                 statement=connection.prepareStatement(sql);
                 statement.setString(1, carModelTf.getText());
+                if(Integer.parseInt(yearOfProductionTf.getText()) > LocalDate.now().getYear()){
+                    JOptionPane.showMessageDialog(null, "Невалидна дата на производство!",
+                            "Грешни данни!", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
                 statement.setInt(2, Integer.parseInt(yearOfProductionTf.getText()));
                 statement.setInt(3, Integer.parseInt(horsePowerTf.getText()));
                 statement.setString(4, gearboxCb.getSelectedItem().toString());
                 statement.setString(5, fuelCb.getSelectedItem().toString());
                 statement.setInt(6, Integer.parseInt(mileageTf.getText()));
                 statement.setDouble(7, Double.parseDouble(priceTf.getText()));
+                statement.setString(8, "available");
                 statement.execute();
                 refreshTable();
                 clearForm();
             } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(null, "Проверете вашите входни данни!",
+                        "Грешни данни!", JOptionPane.WARNING_MESSAGE);
                 throw new RuntimeException(ex);
             }
         }
@@ -227,7 +236,7 @@ public class CarsPanel extends JPanel {
 
             try {
                 connection = DBConnection.getConnection();
-                String sql = "select * from CARS where CAR_MODEL = ?;";
+                String sql = "select * from CARS where CAR_MODEL = ? AND CAR_STATUS = 'available';";
                 statement = connection.prepareStatement(sql);
                 statement.setString(1 , carModelTf.getText());
                 resultSet = statement.executeQuery();
