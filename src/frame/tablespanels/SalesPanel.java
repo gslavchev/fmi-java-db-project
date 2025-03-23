@@ -11,6 +11,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 
 public class SalesPanel extends JPanel {
@@ -81,7 +84,7 @@ public class SalesPanel extends JPanel {
         refreshTable();
 
         table.addMouseListener(new MouseAction(this));
-        
+
         this.setVisible(true);
     }
 
@@ -172,26 +175,26 @@ public class SalesPanel extends JPanel {
 
         @Override
         public void mouseClicked(MouseEvent e) {
-                int row = salesPanel.table.rowAtPoint(e.getPoint());
-                if (row >= 0) {
-                    int salesId = (int) salesPanel.table.getValueAt(row, 0);
-                    String carModel = (String) salesPanel.table.getValueAt(row, 1);
-                    String customerName = (String) salesPanel.table.getValueAt(row, 2);
+            int row = salesPanel.table.rowAtPoint(e.getPoint());
+            if (row >= 0) {
+                int salesId = (int) salesPanel.table.getValueAt(row, 0);
+                String carModel = (String) salesPanel.table.getValueAt(row, 1);
+                String customerName = (String) salesPanel.table.getValueAt(row, 2);
 
-                    Object sellDateObj = salesPanel.table.getValueAt(row, 3);
-                    String sellDate = "";
+                Object sellDateObj = salesPanel.table.getValueAt(row, 3);
+                String sellDate = "";
 
-                    if (sellDateObj instanceof Date) {
-                        java.sql.Date sqlDate = (java.sql.Date) sellDateObj;
-                        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
-                        sellDate = sdf.format(sqlDate);
-                    }
-
-                    salesPanel.id = salesId;
-                    salesPanel.carCb.setSelectedItem(carModel);
-                    salesPanel.customerCb.setSelectedItem(customerName);
-                    salesPanel.sellDateTf.setText(sellDate);
+                if (sellDateObj instanceof Date) {
+                    java.sql.Date sqlDate = (java.sql.Date) sellDateObj;
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                    sellDate = sdf.format(sqlDate);
                 }
+
+                salesPanel.id = salesId;
+                salesPanel.carCb.setSelectedItem(carModel);
+                salesPanel.customerCb.setSelectedItem(customerName);
+                salesPanel.sellDateTf.setText(sellDate);
+            }
         }
 
         @Override
@@ -215,6 +218,7 @@ public class SalesPanel extends JPanel {
         }
     }
 
+
     class AddAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -236,15 +240,15 @@ public class SalesPanel extends JPanel {
                     return;
                 }
 
-                if (!sellDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
-                    JOptionPane.showMessageDialog(null, "Невалиден формат на датата. Моля, използвайте YYYY-MM-DD.");
+                if (!isValidDate(sellDate)) {
+                    JOptionPane.showMessageDialog(null, "Невалиден формат на датата. Моля, използвайте DD-MM-YYYY.");
                     return;
                 }
 
                 try {
-                    Date date = Date.valueOf(sellDate);
-                    statement.setDate(3, date);
-                } catch (IllegalArgumentException ex) {
+                    LocalDate date = LocalDate.parse(sellDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+                    statement.setDate(3, Date.valueOf(date));
+                } catch (DateTimeParseException ex) {
                     JOptionPane.showMessageDialog(null, "Невалидна дата. Моля, въведете валидна дата.");
                     return;
                 }
@@ -263,6 +267,15 @@ public class SalesPanel extends JPanel {
 
             } catch (SQLException ex) {
                 ex.printStackTrace();
+            }
+        }
+
+        private boolean isValidDate(String date) {
+            try {
+                LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+                return true;
+            } catch (DateTimeParseException ex) {
+                return false;
             }
         }
     }
@@ -325,15 +338,15 @@ public class SalesPanel extends JPanel {
                     return;
                 }
 
-                if (!sellDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
-                    JOptionPane.showMessageDialog(null, "Невалиден формат на датата. Моля, използвайте YYYY-MM-DD.");
+                if (!isValidDate(sellDate)) {
+                    JOptionPane.showMessageDialog(null, "Невалиден формат на датата. Моля, използвайте DD-MM-YYYY.");
                     return;
                 }
 
                 try {
-                    Date date = Date.valueOf(sellDate);
-                    statement.setDate(3, date);
-                } catch (IllegalArgumentException ex) {
+                    LocalDate date = LocalDate.parse(sellDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+                    statement.setDate(3, Date.valueOf(date));
+                } catch (DateTimeParseException ex) {
                     JOptionPane.showMessageDialog(null, "Невалидна дата. Моля, въведете валидна дата.");
                     return;
                 }
@@ -347,7 +360,6 @@ public class SalesPanel extends JPanel {
                 ex.printStackTrace();
             }
         }
-
     }
 
     class SearchAction implements ActionListener {
@@ -361,37 +373,33 @@ public class SalesPanel extends JPanel {
                     return;
                 }
 
-                if (!searchDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
-                    JOptionPane.showMessageDialog(null, "Невалиден формат на датата. Моля, използвайте YYYY-MM-DD.");
+                if (!isValidDate(searchDate)) {
+                    JOptionPane.showMessageDialog(null, "Невалиден формат на датата. Моля, използвайте DD-MM-YYYY.");
                     return;
                 }
 
-                try {
-                    Date date = Date.valueOf(searchDate);
+                LocalDate date = LocalDate.parse(searchDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
 
-                    String sql = "SELECT SALES.SALES_ID, CARS.CAR_MODEL, CLIENTS.CLIENT_NAME, SALES.BUYING_DATE " +
-                            "FROM SALES " +
-                            "JOIN CARS ON SALES.CAR_ID = CARS.CAR_ID " +
-                            "JOIN CLIENTS ON SALES.CLIENT_ID = CLIENTS.CLIENT_ID " +
-                            "WHERE SALES.BUYING_DATE = ?";
-                    connection = DBConnection.getConnection();
-                    statement = connection.prepareStatement(sql);
-                    statement.setDate(1, date);
+                connection = DBConnection.getConnection();
+                String sql = "SELECT SALES.SALES_ID, CARS.CAR_MODEL, CLIENTS.CLIENT_NAME, SALES.BUYING_DATE " +
+                        "FROM SALES " +
+                        "JOIN CARS ON SALES.CAR_ID = CARS.CAR_ID " +
+                        "JOIN CLIENTS ON SALES.CLIENT_ID = CLIENTS.CLIENT_ID WHERE SALES.BUYING_DATE = ?";
+                statement = connection.prepareStatement(sql);
+                statement.setDate(1, Date.valueOf(date));
+                resultSet = statement.executeQuery();
 
-                    resultSet = statement.executeQuery();
-                    table.setModel(new MyModel(resultSet));
-                } catch (IllegalArgumentException ex) {
-                    JOptionPane.showMessageDialog(null, "Невалидна дата. Моля, въведете валидна дата.");
-                }
+                table.setModel(new MyModel(resultSet));
+
             } catch (SQLException ex) {
                 ex.printStackTrace();
+            } catch (DateTimeParseException ex) {
+                JOptionPane.showMessageDialog(null, "Невалидна дата. Моля, въведете валидна дата.");
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
         }
     }
-
-
     class RefreshAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -399,6 +407,15 @@ public class SalesPanel extends JPanel {
             loadCars();
             loadCustomers();
             clearForm();
+        }
+    }
+
+    private boolean isValidDate(String date) {
+        try {
+            LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            return true;
+        } catch (DateTimeParseException ex) {
+            return false;
         }
     }
 }
