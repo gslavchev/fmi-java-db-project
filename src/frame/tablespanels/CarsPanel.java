@@ -107,7 +107,7 @@ public class CarsPanel extends JPanel {
 
         try {
             connection = DBConnection.getConnection();
-            statement = connection.prepareStatement("SELECT * FROM CARS WHERE CAR_STATUS = 'available';");
+            statement = connection.prepareStatement("SELECT * FROM CARS;");
             resultSet = statement.executeQuery();
             table.setModel(new MyModel(resultSet));
         } catch (SQLException e) {

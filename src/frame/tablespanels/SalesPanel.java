@@ -282,7 +282,7 @@ public class SalesPanel extends JPanel {
     private void refreshTable() {
         try {
             connection = DBConnection.getConnection();
-            String sql = "SELECT SALES.SALES_ID, CARS.CAR_MODEL, CLIENTS.CLIENT_NAME, SALES.BUYING_DATE " +
+            String sql = "SELECT SALES.SALES_ID, CARS.CAR_MODEL, CLIENTS.CLIENT_NAME ,CARS.PRICE , SALES.BUYING_DATE " +
                     "FROM SALES " +
                     "JOIN CARS ON SALES.CAR_ID = CARS.CAR_ID " +
                     "JOIN CLIENTS ON SALES.CLIENT_ID = CLIENTS.CLIENT_ID";
@@ -370,7 +370,7 @@ public class SalesPanel extends JPanel {
                 String customerName = customerCb.getSelectedItem().toString().trim();
                 connection = DBConnection.getConnection();
 
-                if (searchDate.isEmpty() && !customerName.isEmpty()) {
+                /*if (searchDate.isEmpty() && !customerName.isEmpty()) {
                     JOptionPane.showMessageDialog(null, "Търсене по клиент");
                     String sql = "SELECT SALES.SALES_ID, CARS.CAR_MODEL, CLIENTS.CLIENT_NAME, SALES.BUYING_DATE " +
                             "FROM SALES " +
@@ -398,6 +398,28 @@ public class SalesPanel extends JPanel {
                         "JOIN CLIENTS ON SALES.CLIENT_ID = CLIENTS.CLIENT_ID WHERE SALES.BUYING_DATE = ?";
                 statement = connection.prepareStatement(sql);
                 statement.setDate(1, Date.valueOf(date));
+                resultSet = statement.executeQuery();
+
+                table.setModel(new MyModel(resultSet)); */
+
+                  if (searchDate.isEmpty() && customerName.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Изберете критерии за търсене!");
+                    return;
+                }
+                if (!isValidDate(searchDate)) {
+                    JOptionPane.showMessageDialog(null, "Невалиден формат на датата. Моля, използвайте DD-MM-YYYY.");
+                    return;
+                }
+
+                LocalDate date = LocalDate.parse(searchDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+                String sql = "SELECT SALES.SALES_ID, CARS.CAR_MODEL, CLIENTS.CLIENT_NAME, SALES.BUYING_DATE " +
+                        "FROM SALES " +
+                        "JOIN CARS ON SALES.CAR_ID = CARS.CAR_ID " +
+                        "JOIN CLIENTS ON SALES.CLIENT_ID = CLIENTS.CLIENT_ID WHERE SALES.BUYING_DATE = ? AND CLIENTS.CLIENT_NAME = ?";
+                statement = connection.prepareStatement(sql);
+                statement.setDate(1, Date.valueOf(date));
+                statement.setString(2, customerName);
                 resultSet = statement.executeQuery();
 
                 table.setModel(new MyModel(resultSet));
